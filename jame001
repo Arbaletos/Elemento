@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+system(clear);
+
+$str{"x"} = 10;
+$str{"y"} = 3;
+$str{"x2"} = "Dicko!";
+$str{"name"}="Mistka!";
+
+$xo = 2;
+print "$str{'name'}\n";
+print "$str{'x' . $xo}\n";

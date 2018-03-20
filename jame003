@@ -1,0 +1,197 @@
+#!/usr/bin/perl
+
+	#List of Label to navigate the code:
+	#GenLevel - generate level function
+	#PreSpiel - beginning of code
+	#GenChar - generate mistborn;	
+	#KeyPress - Pressing buttons e.t.c
+	#PrintWind - Draw window for game
+
+#Var Segment fo Warlord!"
+
+$e_file = "e";
+$wid = 25;
+$hei = 25;
+$fy=0; #Field Y
+$fx=0; #Field X
+$bc=0; #Bitch Count
+
+#Casts Var Array Segment fo Wizard!
+$scasts_c = 8;
+@scasts = (); #For 8 Basic Spells
+
+#Ich bin Bydlokoder nicht so Es ist some Comments and label da.
+
+%gc = (); #Game Components
+$gc{'x'} = 0;			#X Position	
+$gc{'y'} = 0;			#Y Position
+$gc{'n'} = "Spieler";		#Name
+$gc{'cp'} = 10;			#Cast Power
+$gc{'dl'} = 50;			#Dark - Light 
+$gc{'hf'} = 50;			#Heat - Frost
+$gc{'nm'} = 50;			#Nature - Metal
+$gc{'ae'} = 50;			#Air - Earth
+$gc{'s'} = 'o';			#Symbol	
+$gc{'h'} = 36;			#Health	
+
+%field = ();	#Format of Net: field{x;y}
+
+
+#####################################
+#Refresho
+sub ref{
+	$field{$gc{'x'} . ':' . $gc{'y'}} = $gc{'s'};	
+	for ($i = 1; $i <= $bc; $i++)
+	{
+		$field{$gc{'x' . $i} . ':' . $gc{'y' . $i}} = $gc{'s' . $i};
+	}	
+}
+
+#Readfile
+sub rsp{
+	open(FILE, "$e_file");
+	for ($i=0;$i < $scasts_c; $i++)
+	{
+		$scasts[$i] = <FILE>;
+		chomp $scasts[$i];
+	}
+	close(FILE);
+}
+
+
+#GenChar
+sub genc{
+	$bc+=1;
+	$gc{'x' . $bc} = int(rand(23))+2;
+	$gc{'y' . $bc} = int(rand(23))+2;
+	$gc{'s' . $bc} = 'm';
+}
+
+#GenLevel
+sub gl{
+	$symb = "#";
+	for( $i=1; $i<=$wid; $i++)
+	{
+		for ( $j=1; $j<=$hei;$j++)
+		{
+			$field{$i . ':' . $j} = "$symb";
+		} 
+	}
+	$symb = " ";
+	#Arena Mod
+	for( $i=2; $i<$wid; $i++)
+	{
+		for ( $j=2; $j<$hei;$j++)
+		{
+			$field{$i . ':' . $j} = "$symb";
+		} 
+	}
+	$gc{'x'} = 13;
+	$gc{'y'} = 13;	
+}
+
+#Check Colision
+sub col{
+	$ret = 0;
+	for ($i = 1; $i <= $bc; $i++)
+	{
+		if ( $gc{'x' . $i} == $dx && $gc{'y' . $i} == $dy){
+			$ret = 1;
+		} 
+	}
+	if ($field{$dx . ':' . $dy} eq "#") {
+		$ret = 1;
+	}
+	$ret;
+}
+
+#KeyPress
+sub kp{
+	$dx = $gc{'x'};
+	$dy = $gc{'y'};
+	$k = <STDIN>;
+	if ($k eq "w\n")
+	{
+		$dy -= 1;
+	}	
+
+	if ($k eq "s\n")
+	{
+		$dy += 1;
+	}
+
+	if ($k eq "a\n")
+	{
+		$dx -= 1;
+	}
+
+	if ($k eq "d\n")
+	{
+		$dx += 1;
+	}
+	
+	if ($k eq "c\n")
+	{
+
+	}
+	if ($k eq "q\n")
+	{
+		exit;	
+	}
+	$x = &col;
+	print "$x\n";
+	if (&col == 0)
+	{
+		$field{$gc{'x'} . ':' . $gc{'y'}} = ' ';
+		$gc{'x'} = $dx;	
+		$gc{'y'} = $dy;
+		&ref;
+	}
+}
+
+sub iprint{
+	print "Hero: $gc{'n'}\n";
+	print "Ya Health: $gc{'h'}\n";
+	print "Ya CastPower: $gc{'cp'}\n";
+}
+
+#PrintWind
+sub wprint{
+	
+	&kp;
+	system(clear);
+	&ref;
+	&printmap;
+	&iprint;
+	&wprint;	
+	
+}
+
+
+sub printmap{
+
+	for( $i=1; $i<=$wid; $i++)
+	{
+		for ( $j=1; $j<=$hei;$j++)
+		{
+			print "$field{$j . ':' . $i}";
+		}
+	print "\n"; 
+	}
+}
+
+
+#PreSpiel
+
+&rsp;
+system(clear);    
+&gl;
+&genc;
+&genc;
+&genc;
+&ref;
+&printmap;
+&wprint;
+
+
+

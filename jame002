@@ -1,0 +1,59 @@
+#!/usr/bin/perl
+
+	#List of Label to navigate the code:
+	#GenLevel - generate level function
+	#PreSpiel - beginning of code
+	
+
+#Var Segment fo Warlord!"
+
+$fy=0; #Field Y
+$fx=0; #Field X
+$bc=0; #Bitch Count
+
+#Ich bin Bydlokoder nicht so Es ist some Comments and label da.
+
+%gc = (); #Game Components
+$gc{'x'} = 0;			#X Position	
+$gc{'y'} = 0;			#Y Position
+$gc{'n'} = "Spieler";		#Name
+$gc{'cp'} = 10;			#Cast Power
+$gc{'dl'} = 50;			#Dark - Light 
+$gc{'hf'} = 50;			#Heat - Frost
+$gc{'nm'} = 50;			#Nature - Metal
+$gc{'ae'} = 50;			#Air - Earth
+$gc{'s'} = 'o';			#Symbol
+
+%field = ();	#Format of Net: field{x;y}
+
+#GenLevel
+sub gl{
+	$symb = "#";
+	for( $i=1; $i<=25; $i++)
+	{
+		for ( $j=1; $j<=25;$j++)
+		{
+			$field{$i . ':' . $j} = "$symb";
+		} 
+	}
+}
+
+sub printmap{
+
+	for( $i=1; $i<=25; $i++)
+	{
+		for ( $j=1; $j<=25;$j++)
+		{
+			print "$field{$i . ':' . $j}";
+		}
+	print "\n"; 
+	}
+}
+
+
+#PreSpiel     
+system(clear);
+&gl;
+&printmap
+
+

@@ -1,0 +1,775 @@
+#!/usr/bin/perl
+
+	#List of Label to navigate the code:
+	#GenLevel - generate mistborn;	
+	#KeyPress - Pressing buttons e.t.c
+s#PrintWind - Draw window for game
+	#Reactio - ArteficialIntellegence
+
+#Var Segment fo Warlord!"
+
+$er_file = "er";
+$ep_file = "ep";
+$e_file = "e";
+$en_file = "en";
+$m_file = "m";
+$sm_file = "sm";
+$wid = 25;
+$hei = 25;
+$ww = 7;
+$wh = 7;
+$wy=0; #Field Y
+$wx=0; #Field X
+$bc=0; #Bitch Count
+$kd=1; #Difficulty Modifyer
+$xp=0; #Experience points
+$starthp = 96;
+
+#Casts Var Array Segment fo Wizard!
+$spellc = 8;
+@scasts = (); #For 8 Basic Spells
+%spells = ();
+@kspells = (); #Known Spells
+$cspells = 0; #Number of known spells
+$victoryword = "";
+@wordmask = ();
+@vpart = ();
+@flabel = ("A","O","E","I","U");
+@slabel = ("B","C","D","R","N","M","O","P","F","L");
+@score = ();
+$aimscore = 10;
+
+
+#Bitches Names list!
+$m1_c = 0;
+$m2_c = 0;
+@mnm = (); #For Mistnames!
+
+#CastsStructure!
+@en = (); #For CastEndings
+$enc = 0; #Count of casts Endings
+@er = (); #Other Roots
+$erc = 0;
+@ep = (); #Prefixes
+$epc = 0;
+$spc=4;
+
+#Ich bin Bydlokoder nicht so Es ist some Comments and label da.
+
+%gc = (); #Game Components
+$gc{'x'} = 0;			#X Position	
+$gc{'y'} = 0;			#Y Position
+$gc{'n'} = "Spieler";		#Name
+$gc{'cp'} = 10;			#Cast Power
+$gc{'1r'} = 0;			#Darkness resistence 
+$gc{'2r'} = 0;			#Light resistence 
+$gc{'3r'} = 0;			#Heat resistence 
+$gc{'4r'} = 0;			#Frost resistence 
+$gc{'5r'} = 0;			#Nature resistence 
+$gc{'6r'} = 0;			#Metall resistence 
+$gc{'7r'} = 0;			#Air resistence 
+$gc{'8r'} = 0;			#Earth resistence 
+$gc{'s'} = '$';			#Symbol	
+$gc{'h'} = $starthp;		#Health	
+$gc{'ex'} = 0;			#Exit x
+$gc{'ey'} = 0;			#Exit y
+
+%field = ();	#Format of Net: field{x;y}
+
+
+#####################################
+#Refresho
+sub ref{
+	if ($gc{'h'}<=0){
+		system(clear);
+		print "Unfortunately u died...\n";
+		$finscore = 0;
+		&getscore;
+		print "Anyway, u achieved $finscore points on ya road to victory.\n\n";
+		print "Any key to start again, q to quit!\n";
+		$anykey=<STDIN>;
+		if ($anykey eq "q\n"){
+			exit;
+		}
+		&newgame;
+	}
+	$wx = $gc{'x'}-3;
+	$wy = $gc{'y'}-3;
+	for ($ri = 1; $ri <= $bc; $ri++)
+	{
+
+		$field{$gc{'x' . $ri} . ':' . $gc{'y' . $ri}} = $gc{'s' . $ri};
+	}	
+	$field{$gc{'x'} . ':' . $gc{'y'}} = $gc{'s'};	
+	if ($field{$gc{'ex'} . ':' . $gc{'ey'}} eq " ") {$field{$gc{'ex'} . ':' . $gc{'ey'}} = "^";}
+	if (($gc{'x'}==$gc{'ex'}) && ($gc{'y'}==$gc{'ey'})) {
+		$bc = 0;
+		$kd+= 0.2;
+		&gl;
+		system(clear);
+		$heal = int(rand(10));
+		print "U have been healed on $heal damage!\n";
+		&lspell;
+		$anykey = <STDIN>;
+		&wprint;
+	}
+}
+
+#Readfile
+sub rsp{
+	open(FILE, "$en_file");
+	while ($en[$enc] = <FILE>)
+	{
+		chomp($en[$enc]);
+		$enc++;
+	}
+	close(FILE);
+	open(FILE, "$er_file");
+	while ($er[$erc] = <FILE>)
+	{
+		chomp($er[$erc]);
+		$erc++;
+	}
+	close(FILE);
+	open(FILE, "$ep_file");
+	while ($ep[$epc] = <FILE>)
+	{
+		chomp($ep[$epc]);
+		$epc++;
+	}
+	close(FILE);
+	open(FILE, "$e_file");
+	for ($i=1;$i<= $spellc; $i++)
+	{
+		$spells{'n' . $i} = <FILE>;
+		chomp($spells{'n' . $i});
+		$spells{'c' . $i} = 1;
+		$spells{'1e' . $i} = $i;
+		$cspells+=1;
+		$spells{'n' . $i} = "$spells{'n' . $i}$en[int(rand($enc))]";
+		$kspells[$cspells] = $i;
+	}
+	@ir = ();
+	$ci = 2;
+	for ($ir[1]=1;$ir[1]<=8;$ir[1]++){
+		&spellgen;	
+	}
+	for ($fic = 1; $fic<=$spellc;$fic++){
+		$inda = 2;
+		for ($fjc = $fic+1; $fjc<=$spellc;$fjc++){
+			if ($spells{'n' . $fic} eq $spells{'n' . $fjc}){
+				$spells{'n' . $fjc} = "$spells{'n' . $fjc}$inda";
+				$inda++;
+			} 
+		}
+	}
+
+	for ($i=1;$i<=8;$i++)
+	{
+		$ord = int(rand(2));
+		if ($ord==0){
+			$vpart[$i] = "$flabel[int(rand(5))]$slabel[int(rand(10))]";
+		}
+		else{
+			$vpart[$i] = "$slabel[int(rand(10))]$flabel[int(rand(5))]";
+
+		}
+		$victoryword="$victoryword$vpart[$i]";
+	}
+	close(FILE);
+}
+
+#random spells generator
+sub spellgen{
+	for ($ir[$ci]=$ir[$ci-1];$ir[$ci]<=8;$ir[$ci]++)
+	{
+		$abl=0;
+		for ($n=1;$n<$ci;$n++){
+			if($ir[$n]%2 == 1 && $ir[$ci]-$ir[$n] == 1){
+				$abl=1;
+			}
+		}
+		if ($abl==0){
+			$spellc+=1;
+			$spells{'n' . $spellc} = "$ep[int(rand($epc))]$er[int(rand($erc))]$en[int(rand($enc))]";
+			$spells{'c' . $spellc} = $ci;
+			for ($fi = 1; $fi <=$ci; $fi++)
+			{
+				$spells{$fi . 'e' . $spellc} = $ir[$fi];
+			}
+			print "\n";
+			if ($ci < $spc){
+				$ci+=1;
+				&spellgen;
+				$ci-=1;
+			}
+		}
+	}
+}
+
+#Learn Spell
+sub lspell{
+	@psp = ();
+	%spl = ();
+	for($i = 2; $i<=$spc; $i++){
+		$psp[$i] = 0;
+	}
+	for($i = 1; $i<=$spellc; $i++){
+		$match = 0;
+		for($j = 1; $j<=$cspells; $j++){
+			if ($spells{'n' . $i} eq $kspells[$j]){
+				$match = 1;
+			}
+		}
+		if ($match == 0){
+			$psp[$spells{'c' . $i}]+=1;
+			$spl{$spells{'c' . $i} . ':' . $psp[$spells{'c' . $i}]} = $i;
+		}
+	}
+	$rid = 2;
+	&randspell;
+}
+
+sub randspell{
+	if ($psp[$rid]>0) {
+		if (int(rand(10))==0 && $rid+1<=$spc){
+			$rid+=1;
+			&randspell;
+		}
+		else{
+			$spid = int(rand($psp[$rid]))+1;
+			$cspells+=1;
+			$kspells[$cspells] = $spl{$rid . ':' . $spid};
+			print "New $spells{'n' . $kspells[$cspells]} spell has been learned!\n";
+		}
+	}
+	else{
+		$rid+=1;
+		if ($rid<=$spc){
+			&randspell;
+		}
+	}
+
+}
+
+
+sub rms{
+	open(FILE, "$m_file");
+	while ($mnm[$m1_c] = <FILE>)
+	{
+		chomp($mnm[$m1_c]);
+		$m1_c+=1;
+	}
+	close(FILE);
+	open(FILE, "$sm_file");
+	while ($mnm[$m1_c+$m2_c] = <FILE>)
+	{
+		chomp($mnm[$m1_c+$m2_c]);
+		$m2_c+=1;
+	}
+	close(FILE);	
+}
+
+
+#GenChar
+sub genc{
+	$bc+=1;
+	$gc{'n' . $bc} = "$mnm[int(rand($m1_c))] $mnm[int(rand($m2_c)+$m1_c)]";
+	$gc{'x' . $bc} = int(rand($bintx))+$bminx;
+	$gc{'y' . $bc} = int(rand($binty))+$bminy;
+	$fl = substr($gc{'n' . $bc},0,1);
+	$gc{'s' . $bc} = "\L$fl";
+	$gc{'1r' . $bc} = int(rand(201))-100;
+	$gc{'2r' . $bc} = $gc{'1r' . $bc} * -1;
+	$gc{'3r' . $bc} = int(rand(201))-100;
+	$gc{'4r' . $bc} = $gc{'3r' . $bc} * -1;
+	$gc{'5r' . $bc} = int(rand(201))-100;
+	$gc{'6r' . $bc} = $gc{'5r' . $bc} * -1;
+	$gc{'7r' . $bc} = int(rand(201))-100;
+	$gc{'8r' . $bc} = $gc{'7r' . $bc} * -1;
+	$gc{'h' . $bc} = (int(rand(11))+10)*$kd;
+	$gc{'cp' . $bc} = (int(rand(11))+5)*$kd;
+	$gc{'e' . $bc} = int(rand(8))+1;
+}
+
+#GenLevel
+sub gl{
+	$symb = "#";
+	for( $i=1; $i<=$wid; $i++)
+	{
+		for ( $j=1; $j<=$hei;$j++)
+		{
+			$field{$i . ':' . $j} = "$symb";
+		} 
+	}
+	$symb = " ";
+	#Arena Mod
+#for( $i=2; $i<$wid; $i++)
+#{
+#	for ( $j=2; $j<$hei;$j++)
+#	{
+#		$field{$i . ':' . $j} = "$symb";
+#	} 
+#}
+#$gc{'x'} = 13;
+#$gc{'y'} = 13;
+	#NormMod
+	$rcount = int(rand(5))+5;
+	for ($i = 0; $i < $rcount; $i++){
+		$map{'x' . $i} = int(rand(5));
+		$map{'y' . $i} = int(rand(5));
+		$nb = int(rand(2));
+		$sb = int(rand(2));
+		$eb = int(rand(2));
+		$wb = int(rand(2));
+		for ($xi = $map{'x' . $i}*5+2 - $wb; $xi <= $map{'x' . $i}*5+4+$eb;$xi++){
+			for($yi = $map{'y' . $i}*5+2 - $nb; $yi <= $map{'y' . $i}*5+4+$sb;$yi++){
+				$field{$xi . ':' . $yi} = "$symb";
+			}
+		}
+		if ($i == 0){
+			$gc{'x'} = $map{'x0'}*5+3;
+			$gc{'y'} = $map{'y0'}*5+3;
+		}
+		else{
+			if (int(rand(2))==0){
+				$x0 = $map{'x' . $i}*5+3;
+				$y0 = $map{'y' . $i}*5+3;
+				$x1 = $map{'x' . $i}*5+3;
+				$y1 = $map{'y' . ($i-1)}*5+3;
+				&drawline;
+				$x0 = $map{'x' . $i}*5+3;
+				$y0 = $map{'y' . ($i-1)}*5+3;
+				$x1 = $map{'x' . ($i-1)}*5+3;
+				$y1 = $map{'y' . ($i-1)}*5+3;
+				&drawline;
+			}
+			else{
+				$x0 = $map{'x' . $i}*5+3;
+				$y0 = $map{'y' . $i}*5+3;
+				$x1 = $map{'x' . ($i-1)}*5+3;
+				$y1 = $map{'y' . $i}*5+3;
+				&drawline;
+				$x0 = $map{'x' . ($i-1)}*5+3;
+				$y0 = $map{'y' . $i}*5+3;
+				$x1 = $map{'x' . ($i-1)}*5+3;
+				$y1 = $map{'y' . ($i-1)}*5+3;
+				&drawline;
+
+			}
+			$lbc = int(rand(2+$nb+$eb+$wb+$sb));
+			if ($map{'x' . $i} == 0) {$wb = 0;}
+			if ($map{'x' . $i} == 4) {$eb = 0;}
+			if ($map{'y' . $i} == 0) {$nb = 0;}
+			if ($map{'y' . $i} == 4) {$sb = 0;}
+			for ($bi = 0;$bi <= $lbc;$bi++){
+				$bminx = $map{'x' . $i}*5 +2 - $wb;
+				$bintx = $map{'x' . $i}*5 +4 + $eb - $bminx;	
+				$bminy = $map{'y' . $i}*5 + 2 - $nb;
+				$binty = $map{'y' . $i}*5 + 4 + $sb - $bminy;
+				&genc;
+			}
+		}
+		if ($i == $rcount - 1){
+			$gc{'ex'} = $map{'x' . $i}*5+3;
+			$gc{'ey'} = $map{'y' . $i}*5+2; 
+		}
+	}
+	$symb = "#";
+	$x0 = 1;
+	$y0 = 1;
+	$x1 = $wid;
+	$y1 = 1;
+	&drawline;
+	$x0 = 1;
+	$y0 = $hei;
+	$x1 = $wid;
+	$y1 = $hei;
+	&drawline;
+	$x0 = 1;
+	$y0 = 1;
+	$x1 = 1;
+	$y1 = $hei;
+	&drawline;
+	$x0 = $wid;
+	$y0 = 1;
+	$x1 = $wid;
+	$y1 = $hei;
+	&drawline;	
+}
+
+sub drawline{
+	if ($x0 > $x1){ 
+		$cx = $x0;
+		$x0 = $x1;
+		$x1 = $cx;
+	}
+	if ($y0 > $y1){
+		$cy = $y0;
+		$y0 = $y1;
+		$y1 = $cy;
+	}
+	for ($fi = $x0; $fi <= $x1; $fi++){
+		for ($fj = $y0;	$fj <= $y1; $fj++){
+			$field{$fi . ':' . $fj} = "$symb";
+		}
+	}
+}
+
+#Reactio
+sub react{
+	$msg = 0;
+	for ($i = 1; $i <=$bc; $i++)
+	{
+		if ($gc{'h' . $i}>0)
+		{
+		$bx = $gc{'x' . $i};
+		$by = $gc{'y' . $i};
+		if( abs($bx - $gc{'x'}) < 3 && abs($by - $gc{'y'}) < 3)
+		{
+			$dmg = ($gc{'cp' . $i}) + $gc{'cp' . $i}*($gc{$gc{'e' . $i} . 'r'} /100);
+			print "$gc{'n' . $i} dealt u $dmg damage!\n";
+			$gc{'h'}-=$dmg;
+			$msg = 1; 
+		}
+		else {
+  		if(abs($bx - $gc{'x'}) < 5 && abs($by - $gc{'y'}) < 5)
+		{
+			$speed = 1;
+			$mix = $bx-$speed;
+			$max = $bx+$speed;
+			$miy = $by-$speed;
+			$may = $by+$speed;
+			if ($bx < $gc{'x'})
+			{
+				$mix += $speed;
+			}
+			if ($bx > $gc{'x'})
+			{
+				$max -= $speed;
+			}
+			if ($by < $gc{'y'})
+			{
+				$miy += $speed;
+			}
+			if ($by > $gc{'y'})
+			{
+				$may -= speed
+			}
+			$curmin = sqrt(($gc{'x'}-$bx)*($gc{'x'} - $bx)+($gc{'y'}-$by)*($gc{'y'}-$by)); 
+			$nbx = $bx;
+			$nby = $by;
+			for ($ix = $mix; $ix<= $max; $ix++){
+				for ($iy = $miy; $iy <= $may; $iy++)
+				{
+					$dx = $ix;
+					$dy = $iy;
+					if (&col==0){
+						if (sqrt(($gc{'x'}-$ix)*($gc{'x'}-$ix)+($gc{'y'}-$iy)*($gc{'y'}-$iy)) < $curmin){
+							$nbx = $ix;
+							$nby = $iy;	
+							$curmin = sqrt(($nbx-$gc{'x'})*($nbx-$gc{'x'})+($gc{'y'}-$nby)*($gc{'y'}-$nby)); 
+						}
+					}	
+				}
+			}
+			$gc{'y' . $i} = $nby;
+			$gc{'x' . $i} = $nbx;
+			$field{$bx . ':' . $by} = ' ';
+		}
+		}
+	}
+	}
+	if($msg==1)
+	{
+		$msg = <STDIN>;
+	}
+
+}
+
+sub victory{
+	system(clear);
+	print "Harray! U spoked Word of Power and destroyed all Mistviehen!\n";
+	$finscore = 0;
+	&getscore;
+	print "Finally, U have Scored $finscore Leidencast points!\n\n";
+
+	print "U may play again, by pressing any key, or leave this game, using q!\n";
+	$ansero = <STDIN>;
+	if ($ansero eq "q\n") {
+		exit;
+	}
+	&newgame;
+}
+
+sub getscore{
+	for ($ki = 1; $ki <=8; $ki++){
+		$finscore+=$score[$ki];
+	}
+}
+
+#Check Colision
+sub col{
+	$ret = 0;
+	for ($ci = 1; $ci <= $bc; $ci++)
+	{
+		if ( $gc{'x' . $ci} == $dx && $gc{'y' . $ci} == $dy && $gc{'h' . $ci} > 0){
+			$ret = 1;
+		} 
+	}
+	if ( $gc{'x'} == $dx && $gc{'y'} == $dy){
+		$ret = 1;
+	}
+	if ($field{$dx . ':' . $dy} eq "#") {
+		$ret = 1;
+	}
+	$ret;
+}
+
+#KeyPress
+sub kp{
+	$errin = 1;
+	$dx = $gc{'x'};
+	$dy = $gc{'y'};
+	$k = <STDIN>;
+	if ($k eq "w\n")
+	{
+		$dy -= 1;
+		$errin = 0;
+	}	
+
+	if ($k eq "s\n")
+	{
+		$dy += 1;
+		$errin = 0;
+	}
+
+	if ($k eq "a\n")
+	{
+		$dx -= 1;
+		$errin = 0;
+	}
+
+	if ($k eq "d\n")
+	{
+		$dx += 1;
+		$errin = 0;
+	}
+	
+	if ($k eq "b\n")
+	{
+		system(clear);
+		for ($i=1; $i<=$cspells; $i++){
+			print "$spells{'n' . $kspells[$i]}(";
+			for ($j = 1; $j<=$spells{'c' . $kspells[$i]};$j++){
+				print "$spells{$j . 'e' . $kspells[$i]}";
+			}
+			print "), ";
+		}
+		print "\nGreat Word of Power:\n";
+		for ($i=1; $i<=8;$i++){
+			print "$wordmask[$i]";
+		}
+		$anykey = <STDIN>;
+	}
+	
+	if ($k eq "c\n")
+	{
+		$findspell = 0;
+		$errin = 0;
+		print "Select Spelltarget!\n";
+		$curt = 1;
+		@icurt = ();
+		for ($i = 1; $i <= $bc; $i++)
+		{
+			if (abs($gc{'x' . $i} - $gc{'x'}) < 4
+				&& abs($gc{'y' . $i} - $gc{'y'}) < 4
+				&& $gc{'h' . $i} > 0)
+			{
+				print "$curt)$gc{'n' . $i}\n";
+				$icurt[$curt] = $i;
+				$curt+=1;
+			}
+		}
+		print "$curt)Say it for ya\n";
+		$curt++;
+		print "$curt)Cancel and Die Fur Glory of leidenkonung!\n";
+		$ans = <STDIN>;
+		if ($ans eq "$curt\n"){
+			$errin = 1;
+			$findspell = 2;
+		}
+		else{
+			$target = $icurt[$ans];
+			print "Enter Spell to cast it!\n";
+			$sp = <STDIN>;
+			if ($sp eq "$victoryword\n"){
+			&victory;
+		}
+		for ($i = 1; $i <= $spellc; $i++)
+		{
+			if ("$spells{'n' . $i}\n" eq $sp)
+			{
+				$newspell = 1;
+				for ($k = 1; $k <= $cspells; $k++){
+					if ($i==$kspells[$k]){
+						$newspell = 0;
+					}
+				}
+				if ($newspell == 1){
+					$cspells;
+					$kspells[$cspells] = $i;
+					print "u Discovered New Spell $spells{'n' . $i}!\n";
+				}
+				$dmg = $gc{'cp'};
+				for ($si = 1; $si <= $spells{'c' . $i}; $si++){
+					$score[$spells{$si . 'e' . $i}] +=1;
+					$dmg +=($gc{'cp'} * $gc{$spells{$si . 'e' . $i} . 'r' . $target} / 100);
+				}
+				if($dmg>$gc{'cp'})
+				{
+					$xp+=$dmg - $gc{'cp'};
+      				}
+				if ($dmg<0){
+					$dmg = 0;
+				}
+				$gc{'h' . $target} -= $dmg;
+				print "$dmg Damage to Mistvieh!\n";
+				if ($gc{'h' . $target} <= 0)
+				{
+					print "And Mistvieh Has been slain...\n";
+					$gc{'s' . $target} = " ";
+				}
+				print "Press Enter to Continue...\n";
+			}
+		}
+		}
+		if ($findspell ==0){
+			print "Your spell doesn't working! \n";
+		}
+		&lvlup;
+		&wincheck;
+		$ans = <STDIN>;
+	}
+	if ($k eq "q\n")
+	{
+		exit;	
+	}
+	if (&col == 0)
+	{
+		$field{$gc{'x'} . ':' . $gc{'y'}} = ' ';
+		$gc{'x'} = $dx;	
+		$gc{'y'} = $dy;
+		&ref;
+	}
+	if ($errin == 1){
+		&wprint;
+	}
+}
+
+sub wincheck{
+	for($ai = 1; $ai <=8; $ai++){
+		if ($score[$ai]>=$aimscore)
+			{
+				if ($wordmask[$ai] eq 'xx'){
+					print "U learned the part of Ancient Word of Power!\n";
+					$wordmask[$ai] = $vpart[$ai];
+				}
+			}
+	}
+}
+
+sub lvlup{
+	if ($xp >= $gc{'cp'})
+	{
+		print "Ya Casting Abilites improved!\n";
+		$xp -= $gc{'cp'};
+		$gc{'h'}+=$gc{'cp'};
+		$gc{'cp'}+=1;
+		&lspell;
+		&lvlup;
+	}
+}
+#PrintWind
+sub wprint{
+	
+	system(clear);
+	&ref;
+	&printwind;
+	&act;
+		
+	
+}
+
+sub act{
+	&kp;
+	&react;
+	&wprint;
+}
+
+sub printwind{
+	print "+-------+\n";
+	for ($i=$wy; $i < $wy+$wh; $i++)
+	{
+		print "|";
+		for ($j=$wx; $j< $wx+$ww; $j++)
+		{
+			print "$field{$j . ':' . $i}";
+			if ($j<1 || $j>$wid || $i<1 || $i>$hei){
+				print "#";
+			}
+		}
+		print "|";
+		if ($wy-$i == -0){print "    Hero:$gc{'n'}";}
+		if ($wy-$i == -1){print "    Health:$gc{'h'}";}	
+		if ($wy-$i == -2){print "    Cast Power:$gc{'cp'}";}	
+		if ($wy-$i == -3){print "    Experience:$xp";}	
+		if ($wy-$i == -4){print "    w,a,s,d+Enter to move";} 	
+		if ($wy-$i == -5){print "    c+Enter to Cast Spells ";}	
+		if ($wy-$i == -6){print "    h to Read Help";}	
+		print "\n"; 
+	}
+	print "+-------+\n";
+}
+
+sub printmap{
+
+	for( $i=1; $i<=$wid; $i++)
+	{
+		for ( $j=1; $j<=$hei;$j++)
+		{
+			print "$field{$j . ':' . $i}";
+		}
+	print "\n"; 
+	}
+}
+
+sub newgame{
+	system(clear);
+	print "Enter ya glorius name, wizard!\n";
+	$namka =<STDIN>;
+	chomp($namka);
+	$gc{'n'} = $namka;
+	system(clear);
+	$xp = 0;
+	$gc{'cp'} = 10;
+	$bc = 0;
+	$kd = 1.0;
+	&gl;
+	$gc{'h'} = $starthp;
+	for ($i=1; $i<=8;$i++){
+		$score[$i] = 0;
+		$wordmask[$i] = 'xx';
+	}
+}
+
+
+#PreSpiel
+
+&rsp;
+&rms;
+&newgame;
+&wprint;
+
+
+
